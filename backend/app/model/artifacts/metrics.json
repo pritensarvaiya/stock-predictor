@@ -1,0 +1,627 @@
+{
+  "generated_at": "2026-09-26T13:36:15.863174+00:00",
+  "universe": "NIFTY 200",
+  "n_symbols": 200,
+  "n_rows": 234851,
+  "date_start": "2021-09-28",
+  "date_end": "2026-09-25",
+  "model": "L2 logistic regression with Platt calibration",
+  "features": [
+    "ret_1",
+    "ret_5",
+    "ret_10",
+    "ret_20",
+    "rsi_14",
+    "macd_hist_pct",
+    "dist_sma20",
+    "dist_sma50",
+    "atr_pct",
+    "vol_ratio",
+    "gap_1",
+    "gap_5_mean",
+    "dist_high20",
+    "range_pct",
+    "close_loc",
+    "nifty_ret_5",
+    "nifty_ret_20",
+    "nifty_dist_sma50"
+  ],
+  "news_in_backtest": false,
+  "note": "Hit rate, precision, AUC, and Brier score are pooled walk-forward test results. Each test fold was scored by a model fit only on earlier dates. The live model is refit on the full labeled sample with the same recipe. Likely is the most inclusive cutoff where the test hit rate was at least 52% and at least 4 points above the base rate. News sentiment is not in the backtest; live probabilities may be nudged by at most 5 points.",
+  "targets": {
+    "next_session_high": {
+      "name": "Next session high +2%",
+      "definition": "A hit means the next cash session's high prints at least 2% above the reference price. It does not mean the stock closes up 2%.",
+      "column": "y_next",
+      "base_rate": 0.24442608647223718,
+      "likely_threshold": 0.5,
+      "unlikely_threshold": 0.2077621735014016,
+      "edge": true,
+      "precision_at_likely": 0.5232016210739615,
+      "n_likely": 4935,
+      "lift": 0.27877553460172433,
+      "threshold_grid": [
+        {
+          "threshold": 0.3,
+          "n": 27572,
+          "precision": 0.4074060641230234,
+          "lift": 0.1629799776507862
+        },
+        {
+          "threshold": 0.35,
+          "n": 17877,
+          "precision": 0.4424120378139509,
+          "lift": 0.1979859513417137
+        },
+        {
+          "threshold": 0.4,
+          "n": 11651,
+          "precision": 0.47609647240580205,
+          "lift": 0.23167038593356487
+        },
+        {
+          "threshold": 0.45,
+          "n": 7664,
+          "precision": 0.4990866388308977,
+          "lift": 0.25466055235866053
+        },
+        {
+          "threshold": 0.5,
+          "n": 4935,
+          "precision": 0.5232016210739615,
+          "lift": 0.27877553460172433
+        },
+        {
+          "threshold": 0.55,
+          "n": 3241,
+          "precision": 0.5396482567108917,
+          "lift": 0.2952221702386545
+        },
+        {
+          "threshold": 0.6,
+          "n": 2135,
+          "precision": 0.5644028103044496,
+          "lift": 0.31997672383221243
+        },
+        {
+          "threshold": 0.65,
+          "n": 1379,
+          "precision": 0.6011602610587382,
+          "lift": 0.35673417458650103
+        },
+        {
+          "threshold": 0.7,
+          "n": 878,
+          "precision": 0.6332574031890661,
+          "lift": 0.3888313167168289
+        },
+        {
+          "threshold": 0.75,
+          "n": 549,
+          "precision": 0.663023679417122,
+          "lift": 0.41859759294488486
+        }
+      ],
+      "pooled": {
+        "n": 107734,
+        "base_rate": 0.24442608647223718,
+        "auc": 0.6686761058830173,
+        "brier": 0.17249824668793803,
+        "likely_threshold": 0.5,
+        "n_likely": 4935,
+        "precision_at_likely": 0.5232016210739615,
+        "recall_at_likely": 0.09805187407435537,
+        "mean_predicted": 0.25569952280775865
+      },
+      "folds": [
+        {
+          "test_start": "2024-07-01",
+          "test_end": "2025-01-01",
+          "n_train": 117121,
+          "n": 23721,
+          "base_rate": 0.26550314067703723,
+          "auc": 0.6796173179683298,
+          "brier": 0.18113216354423373,
+          "likely_threshold": 0.5,
+          "n_likely": 1796,
+          "precision_at_likely": 0.5417594654788419,
+          "recall_at_likely": 0.15449348999682438,
+          "mean_predicted": 0.3047754975053807
+        },
+        {
+          "test_start": "2025-01-01",
+          "test_end": "2025-07-01",
+          "n_train": 140842,
+          "n": 23676,
+          "base_rate": 0.30190910626795064,
+          "auc": 0.6574190239852088,
+          "brier": 0.19794383529190612,
+          "likely_threshold": 0.5,
+          "n_likely": 1846,
+          "precision_at_likely": 0.537919826652221,
+          "recall_at_likely": 0.1389199776161164,
+          "mean_predicted": 0.2907061395482609
+        },
+        {
+          "test_start": "2025-07-01",
+          "test_end": "2026-01-01",
+          "n_train": 164518,
+          "n": 24414,
+          "base_rate": 0.1672810682395347,
+          "auc": 0.6518502495311205,
+          "brier": 0.13395782653252225,
+          "likely_threshold": 0.5,
+          "n_likely": 202,
+          "precision_at_likely": 0.5,
+          "recall_at_likely": 0.02473065621939275,
+          "mean_predicted": 0.19483492521642637
+        },
+        {
+          "test_start": "2026-01-01",
+          "test_end": "2027-01-01",
+          "n_train": 188932,
+          "n": 35923,
+          "base_rate": 0.24505191659939315,
+          "auc": 0.6495865875370324,
+          "brier": 0.17621928669402276,
+          "likely_threshold": 0.5,
+          "n_likely": 1091,
+          "precision_at_likely": 0.47204399633363886,
+          "recall_at_likely": 0.058502783142110645,
+          "mean_predicted": 0.24158601424345055
+        }
+      ],
+      "deciles": [
+        {
+          "bin": "(0.073, 0.144]",
+          "n": 10774,
+          "mean_predicted": 0.12759409396729993,
+          "realized": 0.09884908112121775
+        },
+        {
+          "bin": "(0.144, 0.165]",
+          "n": 10773,
+          "mean_predicted": 0.1547263439570062,
+          "realized": 0.13580246913580246
+        },
+        {
+          "bin": "(0.165, 0.184]",
+          "n": 10773,
+          "mean_predicted": 0.17452791579909205,
+          "realized": 0.15910145734707137
+        },
+        {
+          "bin": "(0.184, 0.203]",
+          "n": 10774,
+          "mean_predicted": 0.19363368115388788,
+          "realized": 0.1847039168368294
+        },
+        {
+          "bin": "(0.203, 0.225]",
+          "n": 10773,
+          "mean_predicted": 0.21359291598985114,
+          "realized": 0.20523531049846838
+        },
+        {
+          "bin": "(0.225, 0.25]",
+          "n": 10773,
+          "mean_predicted": 0.23675767841058,
+          "realized": 0.22890559732664995
+        },
+        {
+          "bin": "(0.25, 0.282]",
+          "n": 10774,
+          "mean_predicted": 0.2651953830171992,
+          "realized": 0.2622053090774086
+        },
+        {
+          "bin": "(0.282, 0.328]",
+          "n": 10773,
+          "mean_predicted": 0.30346311811704185,
+          "realized": 0.3141186299081036
+        },
+        {
+          "bin": "(0.328, 0.409]",
+          "n": 10773,
+          "mean_predicted": 0.36388693370616265,
+          "realized": 0.37213403880070545
+        },
+        {
+          "bin": "(0.409, 0.979]",
+          "n": 10774,
+          "mean_predicted": 0.5236090664811968,
+          "realized": 0.48320029701132355
+        }
+      ],
+      "coefficients": [
+        {
+          "key": "atr_pct",
+          "label": "Average true range",
+          "coefficient": 0.49766892788414024
+        },
+        {
+          "key": "range_pct",
+          "label": "Today's high-low range",
+          "coefficient": 0.18952340450324873
+        },
+        {
+          "key": "ret_20",
+          "label": "20-day return",
+          "coefficient": 0.10238908374048851
+        },
+        {
+          "key": "vol_ratio",
+          "label": "Volume versus recent average",
+          "coefficient": 0.0897053399455449
+        },
+        {
+          "key": "macd_hist_pct",
+          "label": "MACD histogram",
+          "coefficient": -0.08690916793098963
+        },
+        {
+          "key": "ret_10",
+          "label": "10-day return",
+          "coefficient": 0.07195452918281743
+        },
+        {
+          "key": "nifty_dist_sma50",
+          "label": "Nifty 50 versus its 50-day average",
+          "coefficient": -0.06628707667464127
+        },
+        {
+          "key": "nifty_ret_5",
+          "label": "Nifty 50 5-day return",
+          "coefficient": -0.048961512314075396
+        },
+        {
+          "key": "nifty_ret_20",
+          "label": "Nifty 50 20-day return",
+          "coefficient": 0.048428779178102344
+        },
+        {
+          "key": "dist_sma20",
+          "label": "Distance from 20-day average",
+          "coefficient": -0.047010759869197304
+        },
+        {
+          "key": "rsi_14",
+          "label": "14-day RSI",
+          "coefficient": -0.04651082208560955
+        },
+        {
+          "key": "dist_sma50",
+          "label": "Distance from 50-day average",
+          "coefficient": 0.04144936942808292
+        },
+        {
+          "key": "close_loc",
+          "label": "Where the close sat in today's range",
+          "coefficient": 0.03885049206017171
+        },
+        {
+          "key": "dist_high20",
+          "label": "Distance from the 20-day high",
+          "coefficient": 0.0349264897173904
+        },
+        {
+          "key": "gap_1",
+          "label": "Today's opening gap",
+          "coefficient": -0.026807991032832313
+        },
+        {
+          "key": "ret_5",
+          "label": "5-day return",
+          "coefficient": 0.025443194874224046
+        },
+        {
+          "key": "gap_5_mean",
+          "label": "Average gap over 5 sessions",
+          "coefficient": 0.009250177867801891
+        },
+        {
+          "key": "ret_1",
+          "label": "1-day return",
+          "coefficient": -0.0022313630639570602
+        }
+      ]
+    },
+    "five_day_close": {
+      "name": "Close +2% within 5 sessions",
+      "definition": "A hit means at least one of the next five session closes is 2% or more above the reference price.",
+      "column": "y_5d",
+      "base_rate": 0.4132174986440234,
+      "likely_threshold": 0.55,
+      "unlikely_threshold": 0.35123487384741986,
+      "edge": true,
+      "precision_at_likely": 0.5336150595466769,
+      "n_likely": 15618,
+      "lift": 0.12039756090265347,
+      "threshold_grid": [
+        {
+          "threshold": 0.3,
+          "n": 104669,
+          "precision": 0.4159588798975819,
+          "lift": 0.0027413812535584947
+        },
+        {
+          "threshold": 0.35,
+          "n": 92901,
+          "precision": 0.4305228146091,
+          "lift": 0.017305315965076618
+        },
+        {
+          "threshold": 0.4,
+          "n": 70151,
+          "precision": 0.4562586420721016,
+          "lift": 0.04304114342807819
+        },
+        {
+          "threshold": 0.45,
+          "n": 47951,
+          "precision": 0.47971887968968324,
+          "lift": 0.06650138104565984
+        },
+        {
+          "threshold": 0.5,
+          "n": 29325,
+          "precision": 0.5088832054560954,
+          "lift": 0.09566570681207204
+        },
+        {
+          "threshold": 0.55,
+          "n": 15618,
+          "precision": 0.5336150595466769,
+          "lift": 0.12039756090265347
+        },
+        {
+          "threshold": 0.6,
+          "n": 7635,
+          "precision": 0.5553372626064178,
+          "lift": 0.1421197639623944
+        },
+        {
+          "threshold": 0.65,
+          "n": 3334,
+          "precision": 0.5746850629874025,
+          "lift": 0.1614675643433791
+        },
+        {
+          "threshold": 0.7,
+          "n": 1416,
+          "precision": 0.5967514124293786,
+          "lift": 0.18353391378535516
+        },
+        {
+          "threshold": 0.75,
+          "n": 573,
+          "precision": 0.5881326352530541,
+          "lift": 0.17491513660903074
+        }
+      ],
+      "pooled": {
+        "n": 106934,
+        "base_rate": 0.4132174986440234,
+        "auc": 0.5878518304545403,
+        "brier": 0.23888229610752185,
+        "likely_threshold": 0.55,
+        "n_likely": 15618,
+        "precision_at_likely": 0.5336150595466769,
+        "recall_at_likely": 0.1886075089958585,
+        "mean_predicted": 0.44973979820127136
+      },
+      "folds": [
+        {
+          "test_start": "2024-07-01",
+          "test_end": "2025-01-01",
+          "n_train": 117121,
+          "n": 23721,
+          "base_rate": 0.4248134564310105,
+          "auc": 0.5720208571658738,
+          "brier": 0.24832131150895076,
+          "likely_threshold": 0.55,
+          "n_likely": 6244,
+          "precision_at_likely": 0.5070467648942986,
+          "recall_at_likely": 0.3141808077800933,
+          "mean_predicted": 0.5133527214297098
+        },
+        {
+          "test_start": "2025-01-01",
+          "test_end": "2025-07-01",
+          "n_train": 140842,
+          "n": 23676,
+          "base_rate": 0.46798445683392464,
+          "auc": 0.5979331442105855,
+          "brier": 0.2427337131012833,
+          "likely_threshold": 0.55,
+          "n_likely": 3289,
+          "precision_at_likely": 0.5968379446640316,
+          "recall_at_likely": 0.17716606498194945,
+          "mean_predicted": 0.4526536953263807
+        },
+        {
+          "test_start": "2025-07-01",
+          "test_end": "2026-01-01",
+          "n_train": 164518,
+          "n": 24414,
+          "base_rate": 0.3527074629311051,
+          "auc": 0.5819876513041449,
+          "brier": 0.22537537695516216,
+          "likely_threshold": 0.55,
+          "n_likely": 269,
+          "precision_at_likely": 0.550185873605948,
+          "recall_at_likely": 0.017187318546045754,
+          "mean_predicted": 0.38643065242479874
+        },
+        {
+          "test_start": "2026-01-01",
+          "test_end": "2027-01-01",
+          "n_train": 188932,
+          "n": 35123,
+          "base_rate": 0.41052871337869773,
+          "auc": 0.5868859384293843,
+          "brier": 0.2392999395634943,
+          "likely_threshold": 0.55,
+          "n_likely": 5816,
+          "precision_at_likely": 0.5256189821182944,
+          "recall_at_likely": 0.21201192870518065,
+          "mean_predicted": 0.44881954380247074
+        }
+      ],
+      "deciles": [
+        {
+          "bin": "(0.188, 0.34]",
+          "n": 10694,
+          "mean_predicted": 0.3145262236564359,
+          "realized": 0.2951187581821582
+        },
+        {
+          "bin": "(0.34, 0.368]",
+          "n": 10693,
+          "mean_predicted": 0.35476256786988003,
+          "realized": 0.3233891330777144
+        },
+        {
+          "bin": "(0.368, 0.39]",
+          "n": 10693,
+          "mean_predicted": 0.37921438271545893,
+          "realized": 0.35312821471991024
+        },
+        {
+          "bin": "(0.39, 0.413]",
+          "n": 10694,
+          "mean_predicted": 0.4014881627020199,
+          "realized": 0.38311202543482326
+        },
+        {
+          "bin": "(0.413, 0.437]",
+          "n": 10693,
+          "mean_predicted": 0.42470873486285066,
+          "realized": 0.40381558028616854
+        },
+        {
+          "bin": "(0.437, 0.463]",
+          "n": 10693,
+          "mean_predicted": 0.4496201182547947,
+          "realized": 0.4316842794351445
+        },
+        {
+          "bin": "(0.463, 0.492]",
+          "n": 10694,
+          "mean_predicted": 0.47682688182571253,
+          "realized": 0.4360389003179353
+        },
+        {
+          "bin": "(0.492, 0.527]",
+          "n": 10693,
+          "mean_predicted": 0.50848402237421,
+          "realized": 0.46076872720471335
+        },
+        {
+          "bin": "(0.527, 0.577]",
+          "n": 10693,
+          "mean_predicted": 0.549334377646625,
+          "realized": 0.5020106611802113
+        },
+        {
+          "bin": "(0.577, 0.958]",
+          "n": 10694,
+          "mean_predicted": 0.638429488355569,
+          "realized": 0.5431082850196371
+        }
+      ],
+      "coefficients": [
+        {
+          "key": "atr_pct",
+          "label": "Average true range",
+          "coefficient": 0.23720795858734903
+        },
+        {
+          "key": "nifty_dist_sma50",
+          "label": "Nifty 50 versus its 50-day average",
+          "coefficient": -0.20944407368206414
+        },
+        {
+          "key": "nifty_ret_20",
+          "label": "Nifty 50 20-day return",
+          "coefficient": 0.20673325259605896
+        },
+        {
+          "key": "dist_sma20",
+          "label": "Distance from 20-day average",
+          "coefficient": -0.10989710983323608
+        },
+        {
+          "key": "range_pct",
+          "label": "Today's high-low range",
+          "coefficient": 0.0982977117285115
+        },
+        {
+          "key": "ret_20",
+          "label": "20-day return",
+          "coefficient": 0.08357059116133016
+        },
+        {
+          "key": "macd_hist_pct",
+          "label": "MACD histogram",
+          "coefficient": -0.050683908617543585
+        },
+        {
+          "key": "dist_high20",
+          "label": "Distance from the 20-day high",
+          "coefficient": 0.04570474954953908
+        },
+        {
+          "key": "rsi_14",
+          "label": "14-day RSI",
+          "coefficient": 0.04197607453333388
+        },
+        {
+          "key": "gap_1",
+          "label": "Today's opening gap",
+          "coefficient": 0.04086464685743907
+        },
+        {
+          "key": "ret_5",
+          "label": "5-day return",
+          "coefficient": -0.031338068504309424
+        },
+        {
+          "key": "close_loc",
+          "label": "Where the close sat in today's range",
+          "coefficient": 0.029489517417642247
+        },
+        {
+          "key": "ret_1",
+          "label": "1-day return",
+          "coefficient": -0.022018741151499106
+        },
+        {
+          "key": "gap_5_mean",
+          "label": "Average gap over 5 sessions",
+          "coefficient": -0.019805579765924314
+        },
+        {
+          "key": "dist_sma50",
+          "label": "Distance from 50-day average",
+          "coefficient": 0.01677421677946655
+        },
+        {
+          "key": "nifty_ret_5",
+          "label": "Nifty 50 5-day return",
+          "coefficient": -0.01651804650703559
+        },
+        {
+          "key": "vol_ratio",
+          "label": "Volume versus recent average",
+          "coefficient": 0.014034205442807333
+        },
+        {
+          "key": "ret_10",
+          "label": "10-day return",
+          "coefficient": 0.006635098734171398
+        }
+      ]
+    }
+  }
+}
