@@ -1,5 +1,6 @@
 import { createChart } from "lightweight-charts";
 import { useEffect, useMemo, useRef } from "react";
+import { useTheme } from "../theme.jsx";
 
 // lightweight-charts prints unix times as UTC. Shift intraday bars by +5:30
 // so the axis reads India time for everyone, not the viewer's zone.
@@ -23,8 +24,14 @@ function prepare(bars, intraday) {
   return points;
 }
 
+function cssColor(name, fallback) {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+}
+
 export default function PriceChart({ bars, intraday }) {
   const ref = useRef(null);
+  const { theme } = useTheme();
   const points = useMemo(() => prepare(bars, intraday), [bars, intraday]);
 
   useEffect(() => {
@@ -32,33 +39,44 @@ export default function PriceChart({ bars, intraday }) {
     const chart = createChart(ref.current, {
       autoSize: true,
       layout: {
-        background: { color: "#fffdf8" },
-        textColor: "#6f675e",
+        background: { color: cssColor("--chart-bg", "#161b22") },
+        textColor: cssColor("--chart-text", "#a7b0bf"),
         fontFamily: "Outfit, sans-serif",
       },
       grid: {
-        vertLines: { color: "#f3eee6" },
-        horzLines: { color: "#f3eee6" },
+        vertLines: { color: cssColor("--chart-grid", "rgba(232, 237, 244, 0.06)") },
+        horzLines: { color: cssColor("--chart-grid", "rgba(232, 237, 244, 0.06)") },
       },
-      rightPriceScale: { borderColor: "#e3dacb" },
+      rightPriceScale: { borderColor: cssColor("--chart-axis", "rgba(232, 237, 244, 0.12)") },
       timeScale: {
-        borderColor: "#e3dacb",
+        borderColor: cssColor("--chart-axis", "rgba(232, 237, 244, 0.12)"),
         timeVisible: Boolean(intraday),
         secondsVisible: false,
       },
-      crosshair: { vertLine: { color: "#c4622d", labelBackgroundColor: "#1c1915" }, horzLine: { color: "#c4622d", labelBackgroundColor: "#1c1915" } },
+      crosshair: {
+        vertLine: {
+          color: cssColor("--chart-cross", "#e0b56a"),
+          labelBackgroundColor: cssColor("--chart-label", "#0c0e12"),
+        },
+        horzLine: {
+          color: cssColor("--chart-cross", "#e0b56a"),
+          labelBackgroundColor: cssColor("--chart-label", "#0c0e12"),
+        },
+      },
     });
+    const up = cssColor("--chart-up", "#3dd68c");
+    const down = cssColor("--chart-down", "#ff7b7b");
     const series = chart.addCandlestickSeries({
-      upColor: "#0d6e5b",
-      downColor: "#a33b2b",
+      upColor: up,
+      downColor: down,
       borderVisible: false,
-      wickUpColor: "#0d6e5b",
-      wickDownColor: "#a33b2b",
+      wickUpColor: up,
+      wickDownColor: down,
     });
     series.setData(points);
     chart.timeScale().fitContent();
     return () => chart.remove();
-  }, [intraday, points]);
+  }, [intraday, points, theme]);
 
   if (points.length === 0) {
     return <div className="chart chart-empty">No bars for this range.</div>;

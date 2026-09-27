@@ -250,6 +250,7 @@ def build_view(row: pd.Series, scored: dict, sentiment: dict, status: dict, refe
         }
 
     return {
+        "available": True,
         "reference_price": reference_price,
         "reference_mode": status["reference_mode"],
         "horizon_date": status["next_session_date"],

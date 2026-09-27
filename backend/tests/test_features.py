@@ -1,7 +1,13 @@
 import pandas as pd
 import pytest
 
-from backend.app.features.indicators import FEATURE_COLUMNS, compute_symbol_features
+from backend.app.features.indicators import (
+    FEATURE_COLUMNS,
+    SESSIONS_REQUIRED,
+    compute_symbol_features,
+    latest_feature_row,
+    short_history_message,
+)
 
 STOCK_FEATURES = [key for key in FEATURE_COLUMNS if not key.startswith("nifty_")]
 
@@ -38,6 +44,28 @@ def test_future_shock_does_not_change_past_features_but_does_change_the_label():
     assert before.iloc[-2]["y_next"] == 0
     assert after.iloc[-2]["y_next"] == 1
     assert pd.isna(before.iloc[-1]["y_next"])
+
+
+def test_watchlist_skips_a_new_listing_without_raising():
+    from backend.app.services.watchlist import _score_frames
+
+    rows = _score_frames(
+        {"PRASOLCHEM": flat_history(8)},
+        flat_history(80),
+        [{"symbol": "PRASOLCHEM", "name": "Prasol Chemicals Limited"}],
+    )
+    assert rows == []
+
+
+def test_short_history_is_not_scored_and_explains_the_wait():
+    history = flat_history(8)
+    nifty = flat_history(80)
+    assert latest_feature_row(history, nifty) is None
+    assert (
+        short_history_message(8)
+        == f"New listing: only 8 sessions of history, prediction starts after ~{SESSIONS_REQUIRED} sessions"
+    )
+    assert latest_feature_row(flat_history(SESSIONS_REQUIRED + 10), nifty) is not None
 
 
 def test_five_day_label_needs_five_future_closes():

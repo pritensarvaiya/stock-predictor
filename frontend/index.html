@@ -15,6 +15,18 @@
       href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,640&family=Outfit:wght@380;460;540;640&display=swap"
       rel="stylesheet"
     />
+    <script>
+      (function () {
+        var stored = null;
+        try { stored = localStorage.getItem("desk-theme"); } catch (e) {}
+        var allowed = { dark: 1, light: 1, midnight: 1, oled: 1 };
+        var theme = allowed[stored]
+          ? stored
+          : (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+        document.documentElement.setAttribute("data-theme", theme);
+        document.documentElement.style.colorScheme = theme === "light" ? "light" : "dark";
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

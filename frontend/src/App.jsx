@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { api } from "./api";
 import Layout from "./components/Layout";
+import { ThemeProvider } from "./theme.jsx";
 import Home from "./pages/Home";
 import Method from "./pages/Method";
 import Stock from "./pages/Stock";
@@ -49,6 +50,7 @@ export default function App() {
   }, []);
 
   return (
+    <ThemeProvider>
     <DeskContext.Provider value={{ symbols, symbolSource, symbolCount, market }}>
       <BrowserRouter>
         <Routes>
@@ -61,5 +63,6 @@ export default function App() {
         </Routes>
       </BrowserRouter>
     </DeskContext.Provider>
+    </ThemeProvider>
   );
 }
