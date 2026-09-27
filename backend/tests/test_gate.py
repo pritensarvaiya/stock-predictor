@@ -3,6 +3,7 @@ import hmac
 
 from backend.app.auth import authorized, password, safe_next, session_token
 from backend.app.sentiment.budget import GeminiBudget
+from backend.app.services.watchlist import watchlist_settings
 
 
 class _Request:
@@ -34,6 +35,20 @@ def test_safe_next_rejects_offsite_urls():
     assert safe_next("https://evil.example") == "/"
     assert safe_next("//evil.example") == "/"
     assert safe_next(None) == "/"
+
+
+def test_watchlist_settings_default_and_overrides(monkeypatch):
+    monkeypatch.delenv("WATCHLIST_UNIVERSE", raising=False)
+    monkeypatch.delenv("WATCHLIST_BATCH", raising=False)
+    assert watchlist_settings() == ("NIFTY 200", 4)
+    monkeypatch.setenv("WATCHLIST_UNIVERSE", "nifty 100")
+    monkeypatch.setenv("WATCHLIST_BATCH", "2")
+    assert watchlist_settings() == ("NIFTY 100", 2)
+    monkeypatch.setenv("WATCHLIST_UNIVERSE", "SENSEX")
+    monkeypatch.setenv("WATCHLIST_BATCH", "nope")
+    assert watchlist_settings() == ("NIFTY 200", 4)
+    monkeypatch.setenv("WATCHLIST_BATCH", "100")
+    assert watchlist_settings()[1] == 16
 
 
 def test_gemini_budget_allows_a_short_burst_then_stops():

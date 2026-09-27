@@ -20,7 +20,7 @@ from backend.app.data.holidays import refresh_holiday_calendar
 from backend.app.data.symbols import load_equities, search_symbols
 from backend.app.http_client import DataError, close_client
 from backend.app.market_calendar import market_status
-from backend.app.model.predict import ModelNotReady, metrics
+from backend.app.model.predict import ModelNotReady, metrics, model_path
 from backend.app.services.stock import chart, clean_exchange, clean_symbol, prediction, quote, stock_page
 from backend.app.services.stock import news as stock_news
 from backend.app.services.watchlist import WatchlistService
@@ -76,22 +76,14 @@ async def on_model_missing(_request, exc: ModelNotReady):
 
 @app.get("/api/health")
 async def health():
-    equities = await load_equities()
-    ready = False
-    try:
-        metrics()
-        ready = True
-    except Exception:
-        ready = False
+    # Render probes this on every deploy and after a free-instance wake.
+    # It must answer from local files only. Equity and price caches are
+    # rebuilt later, in the background, and are gone after spin-down.
     return {
         "ok": True,
-        "symbols": equities["count"],
-        "symbol_source": equities["source"],
-        "model": ready,
+        "model": model_path().exists(),
         "gemini": bool(GEMINI_API_KEY),
-        "gemini_model": GEMINI_MODEL if GEMINI_API_KEY else None,
         "auth": bool(password()),
-        "market": market_status(),
     }
 
 

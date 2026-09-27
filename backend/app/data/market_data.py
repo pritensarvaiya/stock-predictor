@@ -159,7 +159,10 @@ async def get_chart(yahoo_symbol: str, interval: str, range_: str, *, ttl: float
         return hit[1]["meta"], hit[1]["bars"]
     payload = await yahoo_chart(yahoo_symbol, interval, range_)
     meta, bars = parse_chart(payload)
-    _mem[key] = (now, {"meta": meta, "bars": bars})
+    # ttl 0 is a one-shot download (the 5-year history). Keeping those bars
+    # would pin every scanned symbol in RAM for the life of the process.
+    if ttl > 0:
+        _mem[key] = (now, {"meta": meta, "bars": bars})
     return meta, bars
 
 

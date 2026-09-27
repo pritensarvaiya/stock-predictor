@@ -60,6 +60,8 @@ python -m backend.app.model.train
 | `GEMINI_MODEL` | Gemini model id. Defaults to `gemini-3.1-flash-lite`. |
 | `APP_PASSWORD` | Optional. When set, the UI and API ask for this password. Leave unset for open local use. |
 | `PORT` | Listen port for the container. Local `scripts/dev.sh` stays on 8000 and 5173. |
+| `WATCHLIST_BATCH` | How many daily histories the watchlist holds at once. Default `4`. |
+| `WATCHLIST_UNIVERSE` | `NIFTY 200` (default) or `NIFTY 100`. |
 
 With no key, sentiment is a local scorer: [VADER](https://github.com/cjhutto/vaderSentiment) plus a short list of finance phrases. That fallback is a word list. It misses context. FinBERT would need PyTorch, which is a heavy install for a local app, so it is not the default.
 

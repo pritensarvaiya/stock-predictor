@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import ctypes
+import gc
 import logging
+import os
 import time
 from datetime import datetime
 
@@ -34,6 +37,30 @@ log = logging.getLogger(__name__)
 
 def _history_age(phase: str) -> float:
     return 20 * 60 if phase == "open" else 18 * 3600
+
+
+def watchlist_settings() -> tuple[str, int]:
+    """Universe and how many daily histories to hold at once.
+
+    A free Render instance has 512 MB and no disk that survives spin-down.
+    Scoring a handful of names and then dropping the frames keeps the scan
+    inside that limit. Set WATCHLIST_UNIVERSE to NIFTY 100 to scan fewer names.
+    """
+    raw_name = os.getenv("WATCHLIST_UNIVERSE", "NIFTY 200").strip().upper()
+    universe = raw_name if raw_name in {"NIFTY 100", "NIFTY 200"} else "NIFTY 200"
+    try:
+        batch = int(os.getenv("WATCHLIST_BATCH", "4"))
+    except ValueError:
+        batch = 4
+    return universe, min(16, max(1, batch))
+
+
+def _release_memory() -> None:
+    gc.collect()
+    try:
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
+    except OSError:
+        pass
 
 
 class WatchlistService:
@@ -79,7 +106,7 @@ class WatchlistService:
                 "horizon_date": status["next_session_date"],
                 "horizon_label": status["next_session_label"],
                 "market": status,
-                "universe": "NIFTY 200",
+                "universe": watchlist_settings()[0],
             }
         return {
             **self.snapshot,
@@ -98,15 +125,16 @@ class WatchlistService:
                     "Model artifacts are missing. From the repo root run: python -m backend.app.model.train"
                 )
             load_model()
-            members = await load_index("NIFTY 200")
+            universe, batch = watchlist_settings()
+            members = await load_index(universe)
             status = market_status()
             max_age = _history_age(status["phase"])
             self.progress = {"stage": "prices", "done": 0, "total": len(members)}
             nifty = await get_daily_history("^NSEI", max_age=max_age)
-            frames: dict[str, pd.DataFrame] = {}
+            rows: list[dict] = []
             done = 0
 
-            async def _one(item: dict) -> None:
+            async def _one(item: dict, frames: dict[str, pd.DataFrame]) -> None:
                 nonlocal done
                 try:
                     frames[item["symbol"]] = await get_daily_history(
@@ -118,12 +146,14 @@ class WatchlistService:
                     done += 1
                     self.progress = {"stage": "prices", "done": done, "total": len(members)}
 
-            for index in range(0, len(members), 12):
-                await asyncio.gather(*[_one(item) for item in members[index : index + 12]])
+            for index in range(0, len(members), batch):
+                chunk = members[index : index + batch]
+                frames: dict[str, pd.DataFrame] = {}
+                await asyncio.gather(*[_one(item, frames) for item in chunk])
+                rows.extend(await asyncio.to_thread(_score_frames, frames, nifty, chunk))
+                frames.clear()
+                _release_memory()
 
-            self.progress = {"stage": "scoring", "done": 0, "total": len(frames)}
-            rows = await asyncio.to_thread(_score_frames, frames, nifty, members)
-            frames.clear()
             rows.sort(key=lambda row: row["model_probability"], reverse=True)
             top = rows[:40]
             self.progress = {"stage": "news", "done": 0, "total": len(top)}
@@ -146,7 +176,7 @@ class WatchlistService:
             now = datetime.now(IST)
             snapshot = {
                 "status": "ready",
-                "universe": "NIFTY 200",
+                "universe": universe,
                 "scanned": len(rows),
                 "news_scanned": sum(1 for row in rows if row["news_scanned"]),
                 "horizon_date": status["next_session_date"],
