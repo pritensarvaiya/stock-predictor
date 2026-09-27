@@ -32,28 +32,31 @@ export default function PriceChart({ bars, intraday }) {
     const chart = createChart(ref.current, {
       autoSize: true,
       layout: {
-        background: { color: "#fffdf8" },
-        textColor: "#6f675e",
+        background: { color: "#161b22" },
+        textColor: "#a7b0bf",
         fontFamily: "Outfit, sans-serif",
       },
       grid: {
-        vertLines: { color: "#f3eee6" },
-        horzLines: { color: "#f3eee6" },
+        vertLines: { color: "rgba(232, 237, 244, 0.06)" },
+        horzLines: { color: "rgba(232, 237, 244, 0.06)" },
       },
-      rightPriceScale: { borderColor: "#e3dacb" },
+      rightPriceScale: { borderColor: "rgba(232, 237, 244, 0.12)" },
       timeScale: {
-        borderColor: "#e3dacb",
+        borderColor: "rgba(232, 237, 244, 0.12)",
         timeVisible: Boolean(intraday),
         secondsVisible: false,
       },
-      crosshair: { vertLine: { color: "#c4622d", labelBackgroundColor: "#1c1915" }, horzLine: { color: "#c4622d", labelBackgroundColor: "#1c1915" } },
+      crosshair: {
+        vertLine: { color: "#e0b56a", labelBackgroundColor: "#0c0e12" },
+        horzLine: { color: "#e0b56a", labelBackgroundColor: "#0c0e12" },
+      },
     });
     const series = chart.addCandlestickSeries({
-      upColor: "#0d6e5b",
-      downColor: "#a33b2b",
+      upColor: "#3dd68c",
+      downColor: "#ff7b7b",
       borderVisible: false,
-      wickUpColor: "#0d6e5b",
-      wickDownColor: "#a33b2b",
+      wickUpColor: "#3dd68c",
+      wickDownColor: "#ff7b7b",
     });
     series.setData(points);
     chart.timeScale().fitContent();
