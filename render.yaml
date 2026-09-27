@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: desk
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/health
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.1-flash-lite
+      - key: APP_PASSWORD
+        sync: false

@@ -123,6 +123,7 @@ class WatchlistService:
 
             self.progress = {"stage": "scoring", "done": 0, "total": len(frames)}
             rows = await asyncio.to_thread(_score_frames, frames, nifty, members)
+            frames.clear()
             rows.sort(key=lambda row: row["model_probability"], reverse=True)
             top = rows[:40]
             self.progress = {"stage": "news", "done": 0, "total": len(top)}

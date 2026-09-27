@@ -1,3 +1,12 @@
+---
+title: Desk
+emoji: 📈
+colorFrom: gray
+colorTo: green
+sdk: docker
+app_port: 8000
+---
+
 # Desk
 
 A local research desk for an individual investor in India (Asia/Kolkata). It searches the full NSE equity list, shows delayed prices and a chart, estimates the chance a stock prints a +2% move, and ranks a Nifty 200 watchlist for the next cash session.
@@ -13,7 +22,28 @@ The numbers are probabilities from a historical model. They are often wrong. Thi
 
 Open [http://127.0.0.1:5173](http://127.0.0.1:5173). The API is on port 8000 and the Vite dev server proxies `/api` to it.
 
+On Windows, from the repo root in PowerShell:
+
+```powershell
+py -3 -m venv .venv
+.\.venv\Scripts\python -m pip install -r backend\requirements.txt
+Copy-Item .env.example .env
+cd frontend
+npm install
+cd ..
+.\.venv\Scripts\python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
+```
+
+Leave that window running, and in a second window:
+
+```powershell
+cd frontend
+npm run dev -- --host 127.0.0.1 --port 5173
+```
+
 `setup.sh` creates a virtualenv, installs Python and npm packages, and copies `.env.example` to `.env` if you do not already have one. The first Nifty 200 scan downloads daily history and can take a few minutes. Later scans reuse the on-disk cache.
+
+To put the same app on a public URL, see [DEPLOY.md](DEPLOY.md). That path is one container on `$PORT` and does not replace these local commands.
 
 To rebuild the measured model after you have had the cache warm:
 
@@ -28,6 +58,8 @@ python -m backend.app.model.train
 | --- | --- |
 | `GEMINI_API_KEY` | Optional. When set, news summaries and the price-impact note come from Google Gemini. Never commit a real key. |
 | `GEMINI_MODEL` | Gemini model id. Defaults to `gemini-3.1-flash-lite`. |
+| `APP_PASSWORD` | Optional. When set, the UI and API ask for this password. Leave unset for open local use. |
+| `PORT` | Listen port for the container. Local `scripts/dev.sh` stays on 8000 and 5173. |
 
 With no key, sentiment is a local scorer: [VADER](https://github.com/cjhutto/vaderSentiment) plus a short list of finance phrases. That fallback is a word list. It misses context. FinBERT would need PyTorch, which is a heavy install for a local app, so it is not the default.
 

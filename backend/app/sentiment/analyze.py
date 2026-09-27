@@ -18,6 +18,7 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from backend.app.cache import read_json, write_json
 from backend.app.config import CACHE_DIR, GEMINI_API_KEY, GEMINI_MODEL
 from backend.app.http_client import client
+from backend.app.sentiment.budget import gemini_budget
 
 log = logging.getLogger(__name__)
 
@@ -258,11 +259,22 @@ async def analyze_news(symbol: str, name: str, items: list[dict], *, allow_gemin
     if cached and "score" in cached:
         return cached
     result = None
+    limited = False
     if method == "gemini":
-        result = await gemini_sentiment(items, name)
+        if gemini_budget.allow():
+            result = await gemini_sentiment(items, name)
+        else:
+            limited = True
+            log.info("Gemini budget reached; using the local word list for %s", symbol)
     if result is None:
         result = lexicon_sentiment(items, name)
-        if method == "gemini":
+        if limited:
+            result = {
+                **result,
+                "summary": result["summary"]
+                + " Gemini is paused so the key is not used too quickly. This reading is the local word list.",
+            }
+        elif method == "gemini":
             result = {
                 **result,
                 "summary": result["summary"] + " Gemini was configured but the request failed, so this fallback was used.",

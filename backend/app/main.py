@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from contextlib import asynccontextmanager
+from urllib.parse import parse_qs
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from backend.app.auth import attach_session, authorized, check_password, gate, login_page, password, safe_next
 from backend.app.cache import ensure_cache
 from backend.app.config import DISCLAIMER, GEMINI_API_KEY, GEMINI_MODEL, ROOT
 from backend.app.data.holidays import refresh_holiday_calendar
@@ -25,21 +29,28 @@ log = logging.getLogger(__name__)
 watchlist = WatchlistService()
 
 
+async def _warm_equities() -> None:
+    try:
+        await load_equities()
+    except Exception:
+        log.exception("equity list warmup failed")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
     ensure_cache()
-    await refresh_holiday_calendar()
-    try:
-        await load_equities()
-    except Exception:
-        log.exception("equity list warmup failed")
+    # Holiday and equity refreshes must not hold the process before it can listen.
+    # The embedded holiday list and the shipped equity file cover a slow or blocked NSE.
+    holiday_task = asyncio.create_task(refresh_holiday_calendar())
+    equity_task = asyncio.create_task(_warm_equities())
     watchlist.kick()
     yield
-    if watchlist._task and not watchlist._task.done():
-        watchlist._task.cancel()
+    for task in (holiday_task, equity_task, watchlist._task):
+        if task and not task.done():
+            task.cancel()
     await close_client()
 
 
@@ -50,6 +61,7 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+app.middleware("http")(gate)
 
 
 @app.exception_handler(DataError)
@@ -78,6 +90,7 @@ async def health():
         "model": ready,
         "gemini": bool(GEMINI_API_KEY),
         "gemini_model": GEMINI_MODEL if GEMINI_API_KEY else None,
+        "auth": bool(password()),
         "market": market_status(),
     }
 
@@ -152,6 +165,29 @@ async def metrics_route():
     return body
 
 
+@app.get("/login")
+async def login_form(request: Request, next: str = "/"):
+    if password() and authorized(request):
+        return RedirectResponse(safe_next(next), status_code=303)
+    if not password():
+        return RedirectResponse("/", status_code=303)
+    return login_page(nxt=safe_next(next))
+
+
+@app.post("/api/login")
+async def login_submit(request: Request):
+    form = parse_qs((await request.body()).decode())
+    given = form.get("password", [""])[0]
+    nxt = safe_next(form.get("next", ["/"])[0])
+    secret = password()
+    if not secret:
+        return RedirectResponse("/", status_code=303)
+    if check_password(given, secret):
+        response = RedirectResponse(nxt, status_code=303)
+        return attach_session(response, request, secret)
+    return login_page(error=True, nxt=nxt)
+
+
 @app.get("/api/symbol-check/{symbol}")
 async def symbol_check(symbol: str, exchange: str = "NSE"):
     """Small helper so the UI can reject junk paths before calling Yahoo."""
@@ -165,4 +201,14 @@ async def symbol_check(symbol: str, exchange: str = "NSE"):
 
 dist = ROOT / "frontend" / "dist"
 if dist.exists():
-    app.mount("/", StaticFiles(directory=dist, html=True), name="frontend")
+
+    class SpaFiles(StaticFiles):
+        async def get_response(self, path: str, scope):
+            try:
+                return await super().get_response(path, scope)
+            except StarletteHTTPException as exc:
+                if exc.status_code == 404 and not path.startswith("assets/"):
+                    return await super().get_response("index.html", scope)
+                raise
+
+    app.mount("/", SpaFiles(directory=dist, html=True), name="frontend")

@@ -6,6 +6,11 @@ function errorMessage(body, status) {
 
 async function get(path) {
   const response = await fetch(path);
+  if (response.status === 401) {
+    const next = window.location.pathname + window.location.search;
+    window.location.assign(`/login?next=${encodeURIComponent(next)}`);
+    throw new Error("Sign in required");
+  }
   const body = await response.json().catch(() => null);
   if (!response.ok) throw new Error(errorMessage(body, response.status));
   return body;
@@ -23,6 +28,11 @@ export const api = {
   watchlist: () => get("/api/watchlist"),
   refreshWatchlist: async () => {
     const response = await fetch("/api/watchlist/refresh", { method: "POST" });
+    if (response.status === 401) {
+      const next = window.location.pathname + window.location.search;
+      window.location.assign(`/login?next=${encodeURIComponent(next)}`);
+      throw new Error("Sign in required");
+    }
     const body = await response.json().catch(() => null);
     if (!response.ok) throw new Error(errorMessage(body, response.status));
     return body;
