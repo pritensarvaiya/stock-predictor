@@ -15,18 +15,40 @@ export default function Stock() {
   const [range, setRange] = useState("6M");
   const [error, setError] = useState("");
   const [chartError, setChartError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let stop = false;
     setData(null);
     setError("");
+    setLoading(true);
     api
       .stock(symbol, exchange)
       .then((body) => {
         if (!stop) setData(body);
       })
-      .catch((err) => {
-        if (!stop) setError(err.message);
+      .catch(async (err) => {
+        if (stop) return;
+        const [quoteResult, newsResult] = await Promise.allSettled([
+          api.quote(symbol, exchange),
+          api.news(symbol, exchange),
+        ]);
+        if (stop) return;
+        const quoteBody = quoteResult.status === "fulfilled" ? quoteResult.value : null;
+        const newsBody = newsResult.status === "fulfilled" ? newsResult.value : null;
+        if (quoteBody) {
+          setData({
+            quote: quoteBody,
+            news: newsBody,
+            prediction: { available: false, reason: "error", message: err.message },
+          });
+          return;
+        }
+        setError(err.message);
+        if (newsBody) setData({ quote: null, news: newsBody, prediction: null });
+      })
+      .finally(() => {
+        if (!stop) setLoading(false);
       });
     return () => {
       stop = true;
@@ -99,7 +121,7 @@ export default function Stock() {
             {quote?.isin ? ` · ${quote.isin}` : ""}
           </p>
           <h1>{symbol}</h1>
-          <p className="company">{quote?.name || "Loading…"}</p>
+          <p className="company">{quote?.name || (loading ? "Loading…" : "Price unavailable")}</p>
         </div>
         <div className="segment" role="group" aria-label="Exchange">
           {["NSE", "BSE"].map((item) => (
@@ -111,6 +133,9 @@ export default function Stock() {
       </header>
 
       {error && <p className="error">{error}</p>}
+      {!loading && quote && quote.price == null && (
+        <p className="error">No price for {symbol} on {exchange}.</p>
+      )}
 
       {quote?.price != null && (
         <div className="price-row">
@@ -194,13 +219,26 @@ export default function Stock() {
                   </small>
                 </li>
               ))}
-              {news && news.items?.length === 0 && <li className="search-empty">No recent headlines or filings came back.</li>}
+              {news?.error && <li className="search-empty">{news.error}</li>}
+              {news && !news.error && news.items?.length === 0 && (
+                <li className="search-empty">No recent headlines or filings came back.</li>
+              )}
             </ul>
           </section>
         </div>
 
         <aside className="stack">
-          {prediction && (
+          {prediction?.available === false && (
+            <section className="panel predict">
+              <p className="kicker">
+                Next session{prediction.horizon_label ? ` · ${prediction.horizon_label}` : ""}
+              </p>
+              <h2>No score yet</h2>
+              <p className="listing-note">{prediction.message}</p>
+              {prediction.disclaimer && <p className="disclaimer">{prediction.disclaimer}</p>}
+            </section>
+          )}
+          {prediction?.available !== false && prediction?.primary && (
             <section className="panel predict">
               <p className="kicker">Next session · {prediction.horizon_label}</p>
               <h2>{prediction.primary.name}</h2>
@@ -249,7 +287,10 @@ export default function Stock() {
               <p className="disclaimer">{prediction.disclaimer}</p>
             </section>
           )}
-          {!prediction && !error && <section className="panel">Scoring {symbol}…</section>}
+          {!prediction && loading && <section className="panel">Scoring {symbol}…</section>}
+          {!prediction && !loading && error && (
+            <section className="panel">The score could not be loaded. The message above is the reason.</section>
+          )}
         </aside>
       </div>
     </article>

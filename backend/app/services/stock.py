@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import re
 
+import pandas as pd
+
 from backend.app.config import CLOSED_PRICE_NOTE, DELAY_NOTE, DISCLAIMER
 from backend.app.data.market_data import (
     RANGE_MAP,
@@ -17,7 +19,12 @@ from backend.app.data.market_data import (
 )
 from backend.app.data.news import get_news
 from backend.app.data.symbols import find_symbol, load_equities
-from backend.app.features.indicators import latest_feature_row
+from backend.app.features.indicators import (
+    SESSIONS_REQUIRED,
+    latest_feature_row,
+    session_count,
+    short_history_message,
+)
 from backend.app.http_client import DataError
 from backend.app.market_calendar import market_status
 from backend.app.model.predict import build_view, score_row
@@ -113,6 +120,36 @@ async def news(symbol: str, exchange: str, *, allow_gemini: bool = True) -> dict
     return {"symbol": symbol, "exchange": exchange, "items": items, "sentiment": sentiment}
 
 
+def unavailable_prediction(
+    symbol: str,
+    name: str,
+    exchange: str,
+    live: dict | None,
+    status: dict,
+    sessions: int,
+    *,
+    reason: str | None = None,
+    message: str | None = None,
+) -> dict:
+    """A score the model cannot produce yet. Callers still return price and news."""
+    if reason is None:
+        reason = "short_history" if sessions < SESSIONS_REQUIRED else "incomplete_history"
+    return {
+        "available": False,
+        "reason": reason,
+        "sessions": sessions,
+        "sessions_required": SESSIONS_REQUIRED,
+        "message": message or short_history_message(sessions),
+        "symbol": symbol,
+        "name": name,
+        "exchange": exchange,
+        "as_of": None if not live else live.get("as_of"),
+        "horizon_date": status.get("next_session_date"),
+        "horizon_label": status.get("next_session_label"),
+        "disclaimer": DISCLAIMER,
+    }
+
+
 async def prediction(symbol: str, exchange: str, *, allow_gemini: bool = True) -> dict:
     symbol = clean_symbol(symbol)
     exchange = clean_exchange(exchange)
@@ -121,12 +158,19 @@ async def prediction(symbol: str, exchange: str, *, allow_gemini: bool = True) -
     live = await get_quote(to_yahoo(symbol, exchange), ttl=_quote_ttl(status["phase"]))
     if live.get("price") is None:
         raise DataError(f"No price for {symbol} on {exchange}")
-    history = await get_daily_history(to_yahoo(symbol, exchange), max_age=_history_age(status["phase"]))
+    yahoo = to_yahoo(symbol, exchange)
+    try:
+        history = await get_daily_history(yahoo, max_age=_history_age(status["phase"]))
+    except DataError:
+        history = pd.DataFrame()
+    sessions = session_count(history)
+    if history.empty or sessions < SESSIONS_REQUIRED:
+        return unavailable_prediction(symbol, info["name"], exchange, live, status, sessions)
     nifty = await get_daily_history("^NSEI", max_age=_history_age(status["phase"]))
     history = apply_live_price(history, live["price"], status["phase"])
     row = latest_feature_row(history, nifty)
     if row is None:
-        raise DataError(f"Not enough price history to score {symbol}")
+        return unavailable_prediction(symbol, info["name"], exchange, live, status, sessions)
     research = await news(symbol, exchange, allow_gemini=allow_gemini)
     scored = score_row(row)
     view = build_view(row, scored, research["sentiment"], status, float(live["price"]))
@@ -146,6 +190,28 @@ async def stock_page(symbol: str, exchange: str) -> dict:
     symbol = clean_symbol(symbol)
     exchange = clean_exchange(exchange)
     quote_payload = await quote(symbol, exchange)
-    pred = await prediction(symbol, exchange, allow_gemini=True)
-    research = await news(symbol, exchange, allow_gemini=True)
+    try:
+        pred = await prediction(symbol, exchange, allow_gemini=True)
+    except DataError as exc:
+        status = quote_payload.get("market") or market_status()
+        pred = unavailable_prediction(
+            symbol,
+            quote_payload.get("name") or symbol,
+            exchange,
+            quote_payload,
+            status,
+            sessions=0,
+            reason="error",
+            message=str(exc),
+        )
+    try:
+        research = await news(symbol, exchange, allow_gemini=True)
+    except DataError as exc:
+        research = {
+            "symbol": symbol,
+            "exchange": exchange,
+            "items": [],
+            "sentiment": None,
+            "error": str(exc),
+        }
     return {"quote": quote_payload, "prediction": pred, "news": research}

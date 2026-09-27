@@ -74,6 +74,10 @@ CLIPS = {
 
 MARKET_COLUMNS = ["nifty_ret_5", "nifty_ret_20", "nifty_dist_sma50"]
 
+# dist_sma50 is the longest window the model needs. A new listing cannot
+# be scored until about this many daily sessions exist.
+SESSIONS_REQUIRED = 50
+
 
 def format_feature(key: str, value: float) -> str:
     kind = FEATURE_META[key][1]
@@ -181,6 +185,29 @@ def clip_features(frame: pd.DataFrame) -> pd.DataFrame:
         if key in out.columns:
             out[key] = out[key].clip(low, high)
     return out
+
+
+def session_count(stock: pd.DataFrame | None) -> int:
+    if stock is None or stock.empty:
+        return 0
+    if "close" in stock.columns:
+        return int(stock["close"].notna().sum())
+    return int(len(stock))
+
+
+def short_history_message(sessions: int, required: int = SESSIONS_REQUIRED) -> str:
+    """Plain note for a name the model cannot score yet."""
+    if sessions < required:
+        noun = "session" if sessions == 1 else "sessions"
+        return (
+            f"New listing: only {sessions} {noun} of history, "
+            f"prediction starts after ~{required} sessions"
+        )
+    noun = "session" if sessions == 1 else "sessions"
+    return (
+        f"This name has {sessions} {noun} on record, but they are not complete enough to score. "
+        f"A prediction needs about {required} sessions with prices and volume."
+    )
 
 
 def latest_feature_row(stock: pd.DataFrame, nifty: pd.DataFrame) -> pd.Series | None:

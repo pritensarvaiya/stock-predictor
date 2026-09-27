@@ -14,7 +14,7 @@ from backend.app.config import CACHE_DIR, DISCLAIMER, PRIMARY_DEFINITION
 from backend.app.data.market_data import get_daily_history, to_yahoo
 from backend.app.data.news import get_news
 from backend.app.data.symbols import load_index
-from backend.app.features.indicators import latest_feature_row
+from backend.app.features.indicators import latest_feature_row, session_count, short_history_message
 from backend.app.market_calendar import IST, market_status
 from backend.app.model.predict import (
     load_model,
@@ -177,6 +177,7 @@ def _score_frames(frames: dict, nifty: pd.DataFrame, members: list[dict]) -> lis
         try:
             feature_row = latest_feature_row(frame, nifty)
             if feature_row is None:
+                log.info("watchlist skip %s: %s", symbol, short_history_message(session_count(frame)))
                 continue
             scored = score_row(feature_row)
         except Exception:

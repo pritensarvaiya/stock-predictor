@@ -158,6 +158,7 @@ nav a.active { color: var(--ink); }
 .headlines a:hover { text-decoration: underline; }
 .headlines small { color: var(--muted); }
 .error { background: var(--down-bg); color: var(--down); padding: 10px 12px; border-radius: 12px; }
+.listing-note { background: #f8efd8; color: #6b4a16; padding: 10px 12px; border-radius: 12px; margin-top: 10px; }
 .defs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0; }
 .method { display: flex; flex-direction: column; gap: 16px; }
 .method h3 { margin: 14px 0 8px; font-size: 1.15rem; }

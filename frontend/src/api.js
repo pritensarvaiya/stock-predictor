@@ -16,6 +16,7 @@ export const api = {
   symbols: () => get("/api/symbols"),
   stock: (symbol, exchange) => get(`/api/stock/${encodeURIComponent(symbol)}?exchange=${exchange}`),
   quote: (symbol, exchange) => get(`/api/quote/${encodeURIComponent(symbol)}?exchange=${exchange}`),
+  news: (symbol, exchange) => get(`/api/news/${encodeURIComponent(symbol)}?exchange=${exchange}`),
   chart: (symbol, range, exchange) =>
     get(`/api/chart/${encodeURIComponent(symbol)}?range=${range}&exchange=${exchange}`),
   predict: (symbol, exchange) => get(`/api/predict/${encodeURIComponent(symbol)}?exchange=${exchange}`),
