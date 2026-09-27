@@ -1,9 +1,11 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useDesk } from "../App";
+import { useTheme } from "../theme.jsx";
 import SearchBox from "./SearchBox";
 
 export default function Layout() {
   const { market } = useDesk();
+  const { theme, setTheme, themes } = useTheme();
   const { pathname } = useLocation();
   const open = Boolean(market?.is_open);
   const showCompactSearch = pathname !== "/";
@@ -23,6 +25,16 @@ export default function Layout() {
             <NavLink to="/watchlist">Watchlist</NavLink>
             <NavLink to="/method">Method</NavLink>
           </nav>
+          <label className="theme-switch">
+            <span>Theme</span>
+            <select aria-label="Theme" value={theme} onChange={(event) => setTheme(event.target.value)}>
+              {themes.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
           <div className={`session ${open ? "open" : "closed"}`}>
             <b>{open ? "Market open" : "Market closed"}</b>
             <span>
